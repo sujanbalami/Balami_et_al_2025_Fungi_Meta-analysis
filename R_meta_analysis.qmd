@@ -3,15 +3,13 @@ title: "Persistent recovery gap in soil fungal communities after vegetation rest
 format:
   html:
     toc: true
-    toc-depth: 3          
+    toc-depth: 4          
     toc-title: "Table of contents"
     number-sections: true
     code-fold: false
     theme: default
     fontsize: 0.7em
     toc-location: left
-execute:
-  enabled: false
 ---
 
 # [Chapter I]{style="color: blue;"}
@@ -20,8 +18,11 @@ execute:
 
 ::: {style="background-color:#f0f0f0;"}
 1.  Download and install R v 4.4.0 (<https://cloud.r-project.org>)
+
 2.  Download and install Positron IDE v 2025.11.0 build 234 (<https://positron.posit.co/download.html>)
+
 3.  Download and install Quarto v 1.8.26 (<https://quarto.org/docs/get-started/>)
+
 4.  Installation of Datathief <https://datathief.org> and download link is <https://datathief.org/Datathief.jar> . (Note: To run this software, computer must support JavaScript)
 :::
 
@@ -43,6 +44,57 @@ TS=((Fungi OR "soil fungi" OR microbe\* OR microorganism\* OR microbiome OR myco
 
 # [Chapter III]{style="color: blue;"}
 
+The following steps can be executed on all types of computers, including **macOS, Linux, and Windows**.
+
+R version 4.4.0 (2024-04-24)
+
+## Install required packages
+
+```{r eval = FALSE}
+install.packages(c(
+  "metafor", "numDeriv", "metadat", "Matrix", "gridExtra",
+  "dplyr", "forcats", "sf", "maps", "ggplot2"
+))
+```
+
+These following packages will automatically loaded as dependencies, but it can be installed if needed.
+
+```{r eval = FALSE}
+install.packages(c(
+  "gtable", "crayon", "tidyselect", "Rcpp", "dichromat",
+  "systemfonts", "scales", "textshaping", "lattice", "R6",
+  "labeling", "generics", "classInt", "tibble", "units",
+  "DBI", "pillar", "RColorBrewer", "rlang", "utf8",
+  "mathjaxr", "S7", "cli", "withr", "magrittr", "class",
+  "digest", "nlme", "lifecycle", "vctrs", "KernSmooth",
+  "proxy", "glue", "farver", "ragg", "e1071", "pkgconfig"
+))
+```
+
+## Load all required packages
+
+```{r message = FALSE}
+library(metafor)
+library(numDeriv)
+library(metadat)
+library(Matrix)
+library(gridExtra)
+library(dplyr)
+library(forcats)
+library(sf)
+library(maps)
+library(ggplot2)
+library(stats)
+library(graphics)
+library(grDevices)
+library(utils)
+library(datasets)
+library(methods)
+library(grid)
+```
+
+# [Chapter IV]{style="color: blue;"}
+
 ## Data extraction step
 
 ### Data extraction from tables
@@ -59,13 +111,13 @@ The installation steps are available at this link <https://github.com/EIvimeyCoo
 
 #### Load required package
 
-```{r}
+```{r message = FALSE}
 library(shinyDigitise)
 ```
 
 #### Run shinyDigitise
 
-```{r}
+```{r eval = FALSE}
 getwd()
 shinyDigitise("./Data_folder/example_shinyDigitise") #Use absolute path if this do not open floating window correctly
 ```
@@ -74,13 +126,13 @@ A floating window will be opened, and the subsequent steps should be followed.
 
 ![](images/shiny1.png){fig-align="center" width="259"}
 
-For example, here example figure.png was imported.
+For example, here is the example of figure.png loaded after clicking `GET EXTRACTING`.
 
 ![](images/shiny2.png){fig-align="center" width="280"}
 
-The following steps were followed: **Orientate Figure → Calibrate Axes → Extract Data**. Upon completion, a message was displayed in the R console.
+The following steps have to be followed: **Orientate Figure → Calibrate Axes → Extract Data**. Upon completion, a message will be displayed in the R console.
 
-### Data extraction from community composition (ordination plot)
+### Data extraction from community structure (ordination plot)
 
 #### Open figure in Datathief
 
@@ -115,24 +167,20 @@ library(vegan)
 ##### Calculation step
 
 ```{r}
-# Copy df table from excel sheet
-# Import df data from clipboard
-df<- read.csv(file = "Data_folder/ordination_point.csv", header = TRUE, row.names = 1)
+# Import df data
+df<- read.csv(file = "Data_folder/example_DataThief/ordination_point.csv", header = TRUE, row.names = 1)
 
 # Calculate Euclidean distance matrix
 dist_mat<- vegdist(df, method = "euclidean")
 dist_matrix<- as.matrix(dist_mat)
 
-#-------------------------------------------
-
 # Copy plot category table from excel sheet
 # Read group plot category from clipboard
-comparison<- read.csv(file = "Data_folder/ordination_point_category.csv", header = TRUE, row.names = 1)
+comparison<- read.csv(file = "Data_folder/example_DataThief/ordination_point_category.csv", header = TRUE, row.names = 1)
 
 # Get unique comparison types
 comparison_types <- unique(unlist(comparison))
 
-#-------------------------------------------
 # Calculate WITHIN-group distances
 within_distances <- list()
 for (type in comparison_types) {
@@ -142,12 +190,11 @@ for (type in comparison_types) {
     within_distances[[type]] <- sub_dist[upper.tri(sub_dist)]  # Get upper triangle (no duplicates)
   }
 }
-#-------------------------------------------
+
 # Calculate mean and SD for within-group distances
 mean_within <- sapply(within_distances, mean)
 sd_within   <- sapply(within_distances, sd)
 
-#-------------------------------------------
 # Calculate BETWEEN-group distances
 type_pairs <- combn(comparison_types, 2, simplify = FALSE)  # All possible pairs
 between_distances <- list()
@@ -159,12 +206,11 @@ for (pair in type_pairs) {
   between_distances[[paste(type1, type2, sep = "_vs_")]] <-
     as.vector(dist_matrix[samples1, samples2])  # All distances between groups
 }
-#-------------------------------------------
+
 # Calculate mean and SD for between-group distances
 mean_between <- sapply(between_distances, mean)
 sd_between   <- sapply(between_distances, sd) 
 
-#-------------------------------------------
 # Compile results
 result <- list(
   mean_within_groups = mean_within,
@@ -175,11 +221,11 @@ result <- list(
 result
 ```
 
-From the results displayed in the R console, the relevant data were copied. These data are presented in Supplementary Table S3. These steps were repeated for all relevant studies, and the final datasets were obtained `Data_folder\community_structure\composition.csv` and `Data_folder\community_structure\beta_diversity.csv`.
+From the results displayed in the R console, the relevant data were copied. These data are presented in Supplementary Table S3. The same steps were repeated for all relevant studies, and the final datasets were obtained as `Data_folder/community_structure/composition.csv` and `Data_folder/community_structure/beta_diversity.csv`.
 
-# [Chapter IV]{style="color: blue;"}
+# [Chapter V]{style="color: blue;"}
 
-## Study distribution map
+## Study distribution map and overview of data
 
 ### Load required packages
 
@@ -197,14 +243,13 @@ library(dplyr)
 ```{r}
 # Read location data from tab-separated file
 location <- read.table("Data_folder/data_overview/study_distribution.txt", header = TRUE, sep = "\t") 
-head(location)
 
-# Standardize restoration activity labels for better readability
+# Standardize restoration activity labels
 location$Restoration_activity[location$Restoration_activity == "Active"] <- "Active restoration"
 location$Restoration_activity[location$Restoration_activity == "Passive"] <- "Natural regeneration"
 ```
 
-### Map plus restoration strategies, past disturbance types and ecosystem
+### Map with study distribution
 
 ```{r}
 world_map <- map_data("world")
@@ -219,11 +264,9 @@ location$Ecosystem <- factor(location$Ecosystem, levels = c("Grassland", "Shrubl
 location$Past_disturbance_type <- factor( location$Past_disturbance_type, levels = c("Agriculture", "Pasture", "Mining", "Deforestation", "Erosion", "Monoculture plantation", "Others"))
 
 map_with_points <- base_world_with_grid + geom_point(data = location, aes(x = Longitude, y = Latitude, fill = Past_disturbance_type, shape = Ecosystem), size = 1, alpha = 0.5, color = "black", stroke = 0.3) + scale_fill_manual(values = c("Agriculture" = "red", "Pasture" = "blue", "Mining" = "darkgreen", "Deforestation" = "orange", "Erosion" = "brown", "Monoculture plantation" = "cyan", "Others" = "yellow")) + scale_shape_manual(values = c("Grassland" = 21, "Shrubland" = 24, "Forest" = 22, "Desert" = 23)) + labs(fill = "Past disturbance", shape = "Ecosystem") + theme(legend.title = element_text(size = 10), legend.text = element_text(size = 8), legend.position = "right", strip.text = element_blank()) + facet_wrap(~Restoration_activity, nrow = 2) + guides(fill = guide_legend(override.aes = list(shape = 21, color = "black", size = 2.5), keyheight = unit(0.3, "cm"), keywidth = unit(0.8, "cm")), shape = guide_legend(override.aes = list(fill = "black", color = "black", size = 2.5), keyheight = unit(0.3, "cm"), keywidth = unit(0.8, "cm")))
-
-map_with_points
 ```
 
-### Data overview number of studies
+### Data overview
 
 ```{r}
 # Read data overview CSV file
@@ -241,40 +284,36 @@ restoration_strategy_overview <- data_overview_ordered[data_overview_ordered$Ove
 past_disturbance_overview <- data_overview_ordered[data_overview_ordered$Overview == "Past disturbance",]
 ecosystem_overview <- data_overview_ordered[data_overview_ordered$Overview == "Ecosystem",]
 
-```
-
-```{r}
-# Create horizontal bar plot for restoration strategy overview
+# horizontal bar plot for restoration strategy overview
 restoration_strategy_overview_plot <- ggplot(restoration_strategy_overview, aes(x = Studies, y = forcats::fct_reorder(Types, Studies))) + geom_bar(stat = "identity", alpha = 0.8, fill = "grey90", width = 0.5) + geom_text(aes(label = Studies), hjust = -0.1, size = 3.5) + labs(title = "Restoration strategy", x = NULL, y = NULL) + theme_classic() + theme(plot.title = element_text(hjust = 0.5, face = "plain", size = 10), axis.text.x = element_blank(), axis.title.y = element_text(size = 10, vjust = 0), panel.grid.major.y = element_blank(), panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank(), axis.line.y = element_line(linewidth = 0.1, color = "grey50"), axis.line.x = element_line(linewidth = 0.1, color = "grey50"), axis.ticks.x = element_line(linewidth = 0.1, color = "grey50"), plot.margin = margin(t = 10, r = 10, b = 80, l = 10, unit = "pt")) + scale_x_continuous(expand = expansion(mult = c(0, 0.2)), position = "top")
 
-restoration_strategy_overview_plot
-
-# Create horizontal bar plot for past disturbance overview
+# horizontal bar plot for past disturbance overview
 distrubance_overview_plot <- ggplot(past_disturbance_overview, aes(x = Studies, y = forcats::fct_reorder(Types, Studies))) + geom_bar(stat = "identity", alpha = 0.8, fill = "grey90", width = 0.5) + geom_text(aes(label = Studies), hjust = -0.1, size = 3.5) + labs(title = "Past distrubance", x = NULL, y = NULL) + theme_classic() + theme(plot.title = element_text(hjust = 0.5, face = "plain", size = 10), axis.title.y = element_text(size = 10, vjust = 0), axis.text.x = element_blank(), panel.grid.major.y = element_blank(), panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank(), axis.line.y = element_line(linewidth = 0.1, color = "grey50"), axis.line.x = element_line(linewidth = 0.1, color = "grey50"), axis.ticks.x = element_line(linewidth = 0.1, color = "grey50")) + scale_x_continuous(expand = expansion(mult = c(0, 0.2)), position = "top")
 
-distrubance_overview_plot
-
-# Create horizontal bar plot for ecosystem overview
+# horizontal bar plot for ecosystem overview
 ecosystem_overview_plot <- ggplot(ecosystem_overview, aes(x = Studies, y = forcats::fct_reorder(Types, Studies))) + geom_bar(stat = "identity", alpha = 0.8, fill = "grey90", width = 0.5) + geom_text(aes(label = Studies), hjust = -0.1, size = 3.5) + labs(title = "Ecosystem", x = NULL, y = NULL) + theme_classic() + theme(plot.title = element_text(hjust = 0.5, face = "plain", size = 10), axis.title.x = element_text(size = 10, vjust = 0), axis.text.y = element_text(size = 10), axis.text.x = element_blank(), panel.grid.major.y = element_blank(), panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank(), axis.line.y = element_line(linewidth = 0.1, color = "grey50"), axis.line.x = element_line(linewidth = 0.1, color = "grey50"), axis.ticks.x = element_line(linewidth = 0.1, color = "grey50"), plot.margin = margin(t = 10, r = 10, b = 40, l = 10, unit = "pt")) + scale_x_continuous(expand = expansion(mult = c(0, 0.2)), position = "top") 
-
-# Arrange the three overview plots side by side
-library(gridExtra)
-plot_overview <- grid.arrange(ecosystem_overview_plot, distrubance_overview_plot,restoration_strategy_overview_plot, ncol = 3)
-
-# Combine map with overview plots (map on top, bar charts below)
-plot_overview_map <- grid.arrange(map_with_points,  plot_overview, nrow = 2, heights = c(3, 1))
 ```
 
 ### Figure 1
 
 ```{r}
-# Save combined figure as high-resolution TIFF
+# Arrange the three overview plots
+plot_overview <- grid.arrange(ecosystem_overview_plot, distrubance_overview_plot,restoration_strategy_overview_plot, ncol = 3)
+
+# Combine map with overview plots
+plot_overview_map <- grid.arrange(map_with_points,  plot_overview, nrow = 2, heights = c(3, 1))
+```
+
+```{r eval = FALSE}
+# Save combined figure
 ggsave("Figure_1.tiff", plot =  plot_overview_map, dpi = 600, height = 8, width = 8.5)
 ```
 
-# [Chapter V]{style="color: blue;"}
+# [Chapter VI]{style="color: blue;"}
 
-## Data overview restoration strategies
+## Data overview detail figures
+
+### Restoration strategies
 
 ```{r}
 # Read restoration comparison data
@@ -305,11 +344,9 @@ center_x <- (min_x + max_x) / 2
 
 # Create lollipop plot with broken segments for high values
 overview_restoration <- ggplot(data_segmented_restoration, aes(x = center_x, y = 0)) + geom_segment(aes(xend = x_position, yend = segment_end, color = Metrics), size = 1, lineend = "round") +geom_segment(data = subset(data_segmented_restoration, needs_break == TRUE), aes(x = x_position, xend = x_position, y = break_threshold * 1.1, yend = break_threshold * 1.1 + (Comparison - break_threshold) * 0.3, color = Metrics),size = 1, lineend = "round") + geom_hline(yintercept = 0, color = "black", size = 0.2) +  geom_point(data = subset(data_segmented_restoration, needs_break == TRUE), aes(x = x_position, y = break_threshold),             shape = 21, fill = "white", color = "transparent", size = 2) + geom_text(data = subset(data_segmented_restoration, needs_break == TRUE), aes(x = x_position, y = break_threshold * 1.1 + (Comparison - break_threshold) * 0.3, label = Comparison), vjust = -0.8, size = 2.5) + geom_text(data = subset(data_segmented_restoration, !needs_break), aes(x = x_position, y = Comparison, label = Comparison), vjust = -0.8, size = 2.5) + facet_wrap(~ Restoration_activity, nrow = 1, strip.position = "bottom") +  labs(x = NULL, y = NULL, color = NULL) +  scale_color_manual(values = c( "Observed richness" = "darkgreen", "Chao1 richness" = "limegreen",       "Shannon index" = "springgreen", "Simpson index" = "cyan3",  "Ascomycota" = "orange", "Basidiomycota" = "brown", "Composition" = "steelblue", "PLFA content" = "grey60" )) + theme_bw() + theme(legend.position = "none", legend.text = element_text(size = 6),        axis.text = element_blank(), axis.ticks = element_blank(), axis.line = element_blank(), panel.border = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), strip.background = element_blank(), strip.text = element_text(color = "black"), panel.spacing.x = unit(0.2, "cm"), panel.spacing.y = unit(-0.5, "cm"), plot.margin = margin(0, 0, 0, 0, "pt")) + coord_cartesian(xlim = c(min_x, max_x), ylim = c(0, max(data_segmented_restoration$Comparison) * 0.6))
-
-overview_restoration
 ```
 
-## Data overview ecosystem types
+### Ecosystem types
 
 ```{r}
 data_overview <- read.csv("Data_folder/data_overview/data_overview_forest_comparison.csv", header = TRUE)
@@ -336,11 +373,9 @@ max_x <- max(data_segmented_ecosystem$x_position) + 1
 center_x <- (min_x + max_x) / 2 
 
 overview_ecosystem <- ggplot(data_segmented_ecosystem, aes(x = center_x, y = 0)) + geom_segment(aes(xend = x_position, yend = segment_end, color = Metrics), size = 1, lineend = "round") + geom_segment(data = subset(data_segmented_ecosystem, needs_break == TRUE), aes(x = x_position, xend = x_position, y = break_threshold * 1.1, yend = break_threshold * 1.1 + (Comparison - break_threshold) * 0.3, color = Metrics), size = 1, lineend = "round") + geom_hline(yintercept = 0, color = "black", size = 0.2) + geom_point(data = subset(data_segmented_ecosystem, needs_break == TRUE), aes(x = x_position, y = break_threshold), shape = 21, fill = "white", color = "transparent", size = 2) + geom_text(data = subset(data_segmented_ecosystem, needs_break == TRUE), aes(x = x_position, y = break_threshold * 1.1 + (Comparison - break_threshold) * 0.3, label = Comparison), vjust = -0.8, size = 2.5) + geom_text(data = subset(data_segmented_ecosystem, !needs_break), aes(x = x_position, y = Comparison, label = Comparison), vjust = -0.8, size = 2.5) + facet_wrap(~ Ecosystem, nrow = 1, strip.position = "bottom") + labs(x = NULL, y = NULL, color = NULL) + scale_color_manual(values = c("Observed richness" = "darkgreen", "Chao1 richness" = "limegreen", "Shannon index" = "springgreen", "Simpson index" = "cyan3", "Ascomycota" = "orange", "Basidiomycota" = "brown", "Composition" = "steelblue", "PLFA content" = "grey60")) + theme_bw() + theme(legend.position = "none", legend.text = element_text(size = 6), axis.text = element_blank(), axis.ticks = element_blank(), axis.line = element_blank(), panel.border = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), strip.background = element_blank(), strip.text = element_text(color = "black"), panel.spacing.x = unit(0.2, "cm"), panel.spacing.y = unit(-0.5, "cm"), plot.margin = margin(0, 0, 0, 0, "pt")) + coord_cartesian(xlim = c(min_x, max_x), ylim = c(0, max(data_segmented_ecosystem$Comparison) * 0.6))
-
-overview_ecosystem
 ```
 
-## Data overview past disturbance types
+### Past disturbance types
 
 ```{r}
 data_overview_past_disturbance <- read.csv("Data_folder/data_overview/data_overview_past_disturbance.csv", header = TRUE)
@@ -367,27 +402,24 @@ max_x <- max(data_segmented_past_disturbance$x_position) + 1
 center_x <- (min_x + max_x) / 2 
 
 overview_past_disturbance <- ggplot(data_segmented_past_disturbance, aes(x = center_x, y = 0)) + geom_segment(aes(xend = x_position, yend = segment_end, color = Metrics), size = 1, lineend = "round") + geom_segment(data = subset(data_segmented_past_disturbance, needs_break == TRUE), aes(x = x_position, xend = x_position, y = break_threshold * 1.1, yend = break_threshold * 1.1 + (Comparison - break_threshold) * 0.3, color = Metrics), size = 1, lineend = "round") + geom_hline(yintercept = 0, color = "black", size = 0.2) + geom_point(data = subset(data_segmented_past_disturbance, needs_break == TRUE), aes(x = x_position, y = break_threshold), shape = 21, fill = "white", color = "transparent", size = 2) + geom_text(data = subset(data_segmented_past_disturbance, needs_break == TRUE), aes(x = x_position, y = break_threshold * 1.1 + (Comparison - break_threshold) * 0.3, label = Comparison), vjust = -0.8, size = 2.5) + geom_text(data = subset(data_segmented_past_disturbance, !needs_break), aes(x = x_position, y = Comparison, label = Comparison), vjust = -0.8, size = 2.5) + facet_wrap(~ Past_disturbance, nrow = 1, strip.position = "bottom") + labs(x = NULL, y = NULL, color = NULL) + scale_color_manual(values = c("Observed richness" = "darkgreen", "Chao1 richness" = "limegreen", "Shannon index" = "springgreen", "Simpson index" = "cyan3", "Ascomycota" = "orange", "Basidiomycota" = "brown", "Composition" = "steelblue", "PLFA content" = "grey60")) + theme_bw() + theme(legend.position = "bottom", legend.text = element_text(size = 8), axis.text = element_blank(), axis.ticks = element_blank(), axis.line = element_blank(), panel.border = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), strip.background = element_blank(), strip.text = element_text(color = "black"), panel.spacing.x = unit(0.2, "cm"), panel.spacing.y = unit(-0.5, "cm"), plot.margin = margin(0, 0, 0, 0, "pt")) + coord_cartesian(xlim = c(min_x, max_x), ylim = c(0, max(data_segmented_past_disturbance$Comparison) * 1))
-
-overview_past_disturbance
 ```
 
-## Figure S2
+### Figure S2
 
 ```{r}
 # Combine restoration and ecosystem overview plots side by side
 Figure_S2_1 <- grid.arrange(overview_restoration, overview_ecosystem, nrow = 1, widths = c(0.6, 1))
-Figure_S2_1
 
 # Add past disturbance overview below the first combination
 Figure_S2_2 <- grid.arrange(Figure_S2_1, overview_past_disturbance, nrow = 2)
-Figure_S2_2
-
-# Save the final combined overview figure
-ggsave("overview.tiff", plot =  Figure_S2_2, dpi = 600, height = 6, width = 9)
-
 ```
 
-## Restoration time overview
+```{r eval = FALSE}
+# Save the final combined overview figure
+ggsave("overview.tiff", plot =  Figure_S2_2, dpi = 600, height = 6, width = 9)
+```
+
+### Restoration time
 
 ```{r}
 location_time <- read.table("Data_folder/data_overview/location_restoration_time.txt", header = TRUE, sep = "\t") 
@@ -396,20 +428,22 @@ location_time$Group <- factor(location_time$Group, levels = c("< 10 years", "10 
 
 bar_plot <- location_time %>% count(Group) %>% ggplot(aes(x = Group, y = n)) + geom_col(color = "black", linewidth = 0.25, fill = "grey80", width = 0.7) + geom_text(aes(label = n), vjust = -0.5, size = 3.5, fontface = "plain") + labs(y = "Number of studies", x = "Restoration time") + theme_bw() + theme(plot.title = element_blank(), axis.title = element_text(size = 12, face = "plain", color = "black"), axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)), axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), axis.text = element_text(size = 10, color = "black"), axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border = element_rect(color = "black", linewidth = 0.5), plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm"), legend.position = "none") + scale_y_continuous(expand = expansion(mult = c(0, 0.1)))
 
-print(bar_plot)
+bar_plot
 ```
 
-## Figure S3
+### Figure S3
 
-```{r}
+```{r eval = FALSE}
 ggsave("Figure_S3.tiff", plot =  bar_plot, dpi = 600, height = 6, width = 5) 
 ```
 
-# [Chapter VI]{style="color: blue;"}
+# [Chapter VII]{style="color: blue;"}
 
-## Import data
+## Response ratio calculation
 
-### Alpha diversity
+### Import data
+
+#### Alpha diversity
 
 ```{r}
 alpha_resVsdeg <- read.csv("Data_folder/alpha_diversity/alpha_diversity_resVsdeg.csv", header = TRUE) %>% mutate(across(c(ID, Restoration_strategy, Ecosystem, Past_disturbance_type), as.factor), Restoration_time = as.numeric(Restoration_time))
@@ -426,7 +460,7 @@ Shannon_resVsref <- alpha_resVsref[155:289,]
 Simpson_resVsref <- alpha_resVsref[290:341,]
 ```
 
-### Composition
+#### Composition
 
 ```{r}
 beta <- read.csv("Data_folder/community_structure/beta_diversity.csv", header = TRUE) %>% mutate(across(c(ID, Restoration_strategy, Ecosystem, Past_disturbance_type), as.factor), Restoration_time = as.numeric(Restoration_time))
@@ -442,7 +476,7 @@ composition_raw_degraded <- bind_rows(beta_diversity_degraded, structure_degrade
 composition_raw_reference <- bind_rows(beta_diversity_reference, structure_reference)
 ```
 
-### Relative abundance
+#### Relative abundance
 
 ```{r}
 Ascomycota_deg <- read.csv("Data_folder/relative_abundance/ascomycota_resVsdeg.csv", header = TRUE) %>%  mutate(across(c(ID, Restoration_strategy, Ecosystem, Past_disturbance_type), as.factor), Restoration_time = as.numeric(Restoration_time))
@@ -457,7 +491,7 @@ abundance_raw_degraded <- bind_rows(Ascomycota_deg, Basidiomycota_deg)
 abundance_raw_reference <- bind_rows(Ascomycota_ref, Basidiomycota_ref)
 ```
 
-### Biomass
+#### Biomass
 
 ```{r}
 PLFA_degraded <- read.csv("Data_folder/biomass/plfa_resVsdeg.csv", header = TRUE) %>% mutate(across(c(ID, Restoration_strategy, Ecosystem, Past_disturbance_type), as.factor), Restoration_time = as.numeric(Restoration_time))
@@ -465,13 +499,15 @@ PLFA_degraded <- read.csv("Data_folder/biomass/plfa_resVsdeg.csv", header = TRUE
 PLFA_reference <- read.csv("Data_folder/biomass/plfa_resVsref.csv", header = TRUE) %>% mutate(across(c(ID, Restoration_strategy, Ecosystem, Past_disturbance_type), as.factor), Restoration_time = as.numeric(Restoration_time))
 ```
 
-## Response ratio
+### Calculation
 
-### Load required packages
+#### Load required packages
 
 ```{r}
 library(metafor)
 ```
+
+#### Function to calculate response ratio
 
 ```{r}
 calculate_resVsdeg <- function(data, n1i, n2i, m1i, m2i, sd1i, sd2i) {
@@ -480,63 +516,80 @@ calculate_resVsdeg <- function(data, n1i, n2i, m1i, m2i, sd1i, sd2i) {
 calculate_resVsref <- function(data, n1i, n2i, m1i, m2i, sd1i, sd2i) {escalc(measure = "ROM", n1i = Restored_SS, n2i = Reference_SS, m1i = Restored_Mean, m2i = Reference_Mean, sd1i = Restored_SD, sd2i = Reference_SD, data = data, append = TRUE)}
 ```
 
-### Alpha diversity
+#### Alpha diversity
 
 ```{r}
+# Observed richness Restored vs Degraded
 a_OTU_resVsdeg <- calculate_resVsdeg(OTU_resVsdeg, Restored_SS, Degraded_SS, Restored_Mean, Degraded_Mean, Restored_SD, Degraded_SD)
 
+# Chao1 richness Restored vs Degraded
 a_Chao_resVsdeg <- calculate_resVsdeg(Chao_resVsdeg, Restored_SS, Degraded_SS,  Restored_Mean, Degraded_Mean, Restored_SD, Degraded_SD)
 
+# Shannon index Restored vs Degraded 
 a_Shannon_resVsdeg <- calculate_resVsdeg(Shannon_resVsdeg, Restored_SS, Degraded_SS, Restored_Mean, Degraded_Mean, Restored_SD, Degraded_SD)
 
+# Simpson index Restored vs Degraded
 a_Simpson_resVsdeg <- calculate_resVsdeg(Simpson_resVsdeg, Restored_SS, Degraded_SS, Restored_Mean, Degraded_Mean, Restored_SD, Degraded_SD)
 
+# Observed richness Restored vs Reference
 a_OTU_resVsref <- calculate_resVsref(OTU_resVsref, Restored_SS, Reference_SS, Restored_Mean,Reference_Mean, Restored_SD, Reference_SD)
 
+# Chao1 richness Restored vs Reference
 a_Chao_resVsref <- calculate_resVsref(Chao_resVsref, Restored_SS, Reference_SS, Restored_Mean, Reference_Mean, Restored_SD, Reference_SD)
 
+# Shannon index Restored vs Reference
 a_Shannon_resVsref <- calculate_resVsref(Shannon_resVsref, Restored_SS, Reference_SS, Restored_Mean,  Reference_Mean, Restored_SD, Reference_SD)
 
+# Simpson index Restored vs Reference
 a_Simpson_resVsref <- calculate_resVsref(Simpson_resVsref, Restored_SS, Reference_SS, Restored_Mean,  Reference_Mean, Restored_SD, Reference_SD)
 
-a_OTU_resVsdeg <- a_OTU_resVsdeg[-c(6, 7, 17, 18, 19, 111, 168, 172), ] # Filter some extreme lnRR
+# Filter some extreme lnRR
+a_OTU_resVsdeg <- a_OTU_resVsdeg[-c(6, 7, 17, 18, 19, 111, 168, 172), ] 
 a_Chao_resVsdeg <- a_Chao_resVsdeg[-c(21, 25, 27, 98, 151, 203), ]
 a_Shannon_resVsdeg <- a_Shannon_resVsdeg[-c(1, 2, 3, 124, 202), ]
 
+# Combine all response ratio data
 alpha_diversity_deg_raw <- rbind(a_OTU_resVsdeg, a_Chao_resVsdeg,a_Shannon_resVsdeg, a_Simpson_resVsdeg )
 alpha_diversity_ref_raw <- rbind(a_OTU_resVsref, a_Chao_resVsref,a_Shannon_resVsref, a_Simpson_resVsref )
 ```
 
-### Composition
+#### Composition
 
 ```{r}
 # Composition data already have lnRR and variance (vi)
 ```
 
-### Relative abundance
+#### Relative abundance
 
 ```{r}
+# Ascomycota Restored vs Degraded
 a_Ascomycota_degraded <- calculate_resVsdeg(Ascomycota_deg, Restored_SS, Degraded_SS, Restored_Mean, Degraded_Mean, Restored_SD, Degraded_SD)
 
+# Ascomycota Restored vs Reference
 a_Ascomycota_reference <- calculate_resVsref(Ascomycota_ref, Restored_SS, Degraded_SS, Restored_Mean, Degraded_Mean, Restored_SD, Degraded_SD)
 
+# Basidiomycota Restored vs Degraded
 a_Basidiomycota_degraded <- calculate_resVsdeg(Basidiomycota_deg, Restored_SS, Degraded_SS, Restored_Mean,  Degraded_Mean, Restored_SD, Degraded_SD)
 
+# Basidiomycota Restored vs Reference
 a_Basidiomycota_reference <- calculate_resVsref(Basidiomycota_ref, Restored_SS, Degraded_SS, Restored_Mean,  Degraded_Mean, Restored_SD, Degraded_SD)
 
+# Combine all response ratio data
 Ascomycota_Basidiomycota_deg_raw <- rbind(a_Ascomycota_degraded, a_Basidiomycota_degraded)
 Ascomycota_Basidiomycota_ref_raw <- rbind(a_Ascomycota_reference, a_Basidiomycota_reference)
 ```
 
-### Biomass
+#### Biomass
 
 ```{r}
+# PLFA content Restored vs Degraded
 a_PLFA_degraded <- calculate_resVsdeg(PLFA_degraded, Restored_SS, Degraded_SS, Restored_Mean, Degraded_Mean, Restored_SD, Degraded_SD)
 
+# PLFA content Restored vs Reference
 a_PLFA_reference <- calculate_resVsref(PLFA_reference, Restored_SS, Degraded_SS, Restored_Mean, Degraded_Mean,Restored_SD, Degraded_SD)
 ```
 
-# [Chapter VII]{style="color: blue;"}
+# [Chapter VIII]{style="color: blue;"}
 
 ## Publication bias
 
@@ -545,27 +598,35 @@ a_PLFA_reference <- calculate_resVsref(PLFA_reference, Restored_SS, Degraded_SS,
 #### Alpha diversity
 
 ```{r}
+# Observed richness Restored vs Degraded
 eggers_OTU_deg <- rma(yi = yi, vi = vi, data = a_OTU_resVsdeg, method = "REML")
 regtest(eggers_OTU_deg)
 
+# Observed richness Restored vs Reference
 eggers_OTU_ref <- rma(yi = yi, vi = vi, data = a_OTU_resVsref, method = "REML")
 regtest(eggers_OTU_ref)
 
+# Chao1 richness Restored vs Degraded
 eggers_Chao_deg <- rma(yi = yi, vi = vi, data = a_Chao_resVsdeg, method = "REML")
 regtest(eggers_Chao_deg)
 
+# Chao1 richness Restored vs Reference
 eggers_Chao_ref <- rma(yi = yi, vi = vi, data = a_Chao_resVsref, method = "REML")
 regtest(eggers_Chao_ref)
 
+# Shannon index Restored vs Degraded
 eggers_Shannon_deg <- rma(yi = yi, vi = vi, data = a_Shannon_resVsdeg, method = "REML")
 regtest(eggers_Shannon_deg)
 
+# Shannon index Restored vs Reference
 eggers_Shannon_ref <- rma(yi = yi, vi = vi, data = a_Shannon_resVsref, method = "REML")
 regtest(eggers_Shannon_ref)
 
+# Simpson index Restored vs Degraded
 eggers_Simpson_deg <- rma(yi = yi, vi = vi, data = a_Simpson_resVsdeg, method = "REML")
 regtest(eggers_Simpson_deg)
 
+# Simpson index Restored vs Reference
 eggers_Simpson_ref <- rma(yi = yi, vi = vi, data = a_Simpson_resVsref, method = "REML")
 regtest(eggers_Simpson_ref)
 ```
@@ -573,15 +634,19 @@ regtest(eggers_Simpson_ref)
 #### Composition
 
 ```{r}
+# Beta diversity Restored vs Degraded
 eggers_beta_diversity_degraded <- rma(yi = yi, vi = vi, data = beta_diversity_degraded, method = "REML")
 regtest(eggers_beta_diversity_degraded)
 
+# Beta diversity Restored vs Reference
 eggers_beta_diversity_reference <- rma(yi = yi, vi = vi, data = beta_diversity_reference, method = "REML")
 regtest(eggers_beta_diversity_reference)
 
+# Community structure Restored vs Degraded
 eggers_structure_degraded <- rma(yi = yi, vi = vi, data = structure_degraded, method = "REML")
 regtest(eggers_structure_degraded)
 
+# Community structure Restored vs Reference
 eggers_structure_reference <- rma(yi = yi, vi = vi, data = structure_reference, method = "REML")
 regtest(eggers_structure_reference)
 ```
@@ -589,15 +654,19 @@ regtest(eggers_structure_reference)
 #### Relative abundance
 
 ```{r}
+# Ascomycota Restored vs Degraded
 eggers_Ascomycota_deg <- rma(yi = yi, vi = vi, data = a_Ascomycota_degraded, method = "REML")
 regtest(eggers_Ascomycota_deg)
 
+# Ascomycota Restored vs Reference
 eggers_Ascomycota_ref <- rma(yi = yi, vi = vi, data = a_Ascomycota_reference, method = "REML")
 regtest(eggers_Ascomycota_ref)
 
+# Basidiomycota Restored vs Degraded
 eggers_Basidiomycota_deg <- rma(yi = yi, vi = vi, data = a_Basidiomycota_degraded, method = "REML")
 regtest(eggers_Basidiomycota_deg)
 
+# Basidiomycota Restored vs Reference
 eggers_Basidiomycota_ref <- rma(yi = yi, vi = vi, data = a_Basidiomycota_reference, method = "REML")
 regtest(eggers_Basidiomycota_ref)
 ```
@@ -605,9 +674,11 @@ regtest(eggers_Basidiomycota_ref)
 #### Biomass
 
 ```{r}
+# PLFA content Restored vs Degraded
 eggers_PLFA_deg <- rma(yi = yi, vi = vi, data = a_PLFA_degraded, method = "REML")
 regtest(eggers_PLFA_deg)
 
+# PLFA content Restored vs Reference
 eggers_PLFA_ref <- rma(yi = yi, vi = vi, data = a_PLFA_reference, method = "REML")
 regtest(eggers_PLFA_deg)
 ```
@@ -616,7 +687,7 @@ regtest(eggers_PLFA_deg)
 
 #### Alpha diversity
 
-```{r}
+```{r eval = FALSE}
 png("funnel_plot1.tiff", width = 10, height = 6, units = "in", res = 300)
 
 par(mfrow = c(2, 4), mar = c(4.5, 4.5, 4, 2), mgp = c(3, 1, 0))
@@ -668,7 +739,7 @@ dev.off()
 
 #### Relative abundance
 
-```{r}
+```{r eval = FALSE}
 png( "funnel_plot2.tiff", width = 10, height = 3, units = "in", res = 300)
 
 par(mfrow = c(1, 4), mar = c(4.5, 4.5, 4, 2), mgp = c(3, 1, 0))
@@ -697,7 +768,7 @@ dev.off()
 
 #### Composition
 
-```{r}
+```{r eval = FALSE}
 png("funnel_plot3.tiff", width = 10, height = 3, units = "in", res = 300)
 
 par(mfrow = c(1, 4), mar = c(4.5, 4.5, 4, 2), mgp = c(3, 1, 0))
@@ -725,7 +796,7 @@ funnel(rma.mv(yi, vi, random = ~ 1 | ID, data = structure_reference),
 dev.off()
 ```
 
-```{r}
+```{r eval = FALSE}
 png("funnel_plot4.tiff", width = 10, height = 3, units = "in", res = 300)
 
 # Set larger margins for multi-plot layout
@@ -743,37 +814,46 @@ funnel(rma.mv(yi, vi, random = ~ 1 | ID, data = a_PLFA_reference), main = "PLFA 
 dev.off()
 ```
 
-# [Chapter VIII]{style="color: blue;"}
+# [Chapter IX]{style="color: blue;"}
 
 ## Overall effect of vegetation restoration
 
 ### Alpha diversity
 
 ```{r}
+# Observed richness Restored vs Degraded
 OTU_deg = rma.mv(yi, vi, random = ~ 1 | ID, data = a_OTU_resVsdeg)
 OTU_deg
 
+# Observed richness Restored vs Reference
 OTU_ref = rma.mv(yi, vi, random = ~ 1 | ID, data = a_OTU_resVsref)
 OTU_ref
 
+# Chao1 richness Restored vs Degraded
 Chao_deg = rma.mv(yi, vi, random = ~ 1 | ID, data = a_Chao_resVsdeg)
 Chao_deg
 
+# Chao1 richness Restored vs Reference
 Chao_ref = rma.mv(yi, vi, random = ~ 1 | ID, data = a_Chao_resVsref)
 Chao_ref
 
+# Shannon index Restored vs Degraded
 Shannon_deg = rma.mv(yi, vi, random = ~ 1 | ID, data = a_Shannon_resVsdeg)
 Shannon_deg
 
+# Shannon index Restored vs Reference
 Shannon_ref = rma.mv(yi, vi, random = ~ 1 | ID, data = a_Shannon_resVsref)
 Shannon_ref
 
+# Simpson index Restored vs Degraded
 Simpson_deg = rma.mv(yi, vi, random = ~ 1 | ID, data = a_Simpson_resVsdeg)
 Simpson_deg
 
+# Shannon index Restored vs Reference
 Simpson_ref = rma.mv(yi, vi, random = ~ 1 | ID, data = a_Simpson_resVsref)
 Simpson_ref
 
+# prepare dataset for number of studies and number of observations
 OTU_counts_deg <- a_OTU_resVsdeg %>%group_by(Metrics) %>%summarise(studies = n_distinct(ID), observations = n())
 OTU_counts_ref <- a_OTU_resVsref %>%group_by(Metrics) %>% summarise(studies = n_distinct(ID), observations = n())
 Chao_counts_deg <- a_Chao_resVsdeg %>%group_by(Metrics) %>%summarise( studies = n_distinct(ID), observations = n())
@@ -785,14 +865,19 @@ Simpson_counts_ref <- a_Simpson_resVsref %>%group_by(Metrics) %>% summarise(stud
 
 alpha_diversity_counts <- bind_rows(OTU_counts_deg %>% mutate(Comparison = "Restored vs Degraded", Metrics = "Observed richness"), OTU_counts_ref %>% mutate(Comparison = "Restored vs Reference", Metrics = "Observed richness"), Chao_counts_deg %>% mutate(Comparison = "Restored vs Degraded", Metrics = "Chao1 richness"), Chao_counts_ref %>% mutate(Comparison = "Restored vs Reference", Metrics = "Chao1 richness"), Shannon_counts_deg %>% mutate(Comparison = "Restored vs Degraded", Metrics = "Shannon index"), Shannon_counts_ref %>% mutate(Comparison = "Restored vs Reference", Metrics = "Shannon index"), Simpson_counts_deg %>% mutate(Comparison = "Restored vs Degraded", Metrics = "Simpson index"), Simpson_counts_ref %>% mutate(Comparison = "Restored vs Reference", Metrics = "Simpson index"))
 
+# Observed richness change to % Change
 OTU_mean_ci <- data.frame(Comparison = c("Restored vs Degraded", "Restored vs Reference"), Metrics = "Observed richness", yi = c(coef(OTU_deg)[1], coef(OTU_ref)[1]), ci.lb = c(OTU_deg$ci.lb[1], OTU_ref$ci.lb[1]), ci.ub = c(OTU_deg$ci.ub[1], OTU_ref$ci.ub[1])) %>% mutate(yi_pct = (exp(yi) - 1) * 100, ci.lb_pct = (exp(ci.lb) - 1) * 100, ci.ub_pct = (exp(ci.ub) - 1) * 100)
 
+# Chao1 richness change to % Change
 Chao_mean_ci <- data.frame(Comparison = c("Restored vs Degraded", "Restored vs Reference"), Metrics = "Chao1 richness", yi = c(coef(Chao_deg)[1], coef(Chao_ref)[1]), ci.lb = c(Chao_deg$ci.lb[1], Chao_ref$ci.lb[1]), ci.ub = c(Chao_deg$ci.ub[1], Chao_ref$ci.ub[1])) %>% mutate(yi_pct = (exp(yi) - 1) * 100, ci.lb_pct = (exp(ci.lb) - 1) * 100, ci.ub_pct = (exp(ci.ub) - 1) * 100)
 
+# Shannon index change to % Change
 Shannon_mean_ci <- data.frame(Comparison = c("Restored vs Degraded", "Restored vs Reference"), Metrics = "Shannon index", yi = c(coef(Shannon_deg)[1], coef(Shannon_ref)[1]), ci.lb = c(Shannon_deg$ci.lb[1], Shannon_ref$ci.lb[1]), ci.ub = c(Shannon_deg$ci.ub[1], Shannon_ref$ci.ub[1])) %>% mutate(yi_pct = (exp(yi) - 1) * 100, ci.lb_pct = (exp(ci.lb) - 1) * 100, ci.ub_pct = (exp(ci.ub) - 1) * 100)
 
+# Simpson index change to % Change
 Simpson_mean_ci <- data.frame(Comparison = c("Restored vs Degraded", "Restored vs Reference"), Metrics = "Simpson index", yi = c(coef(Simpson_deg)[1], coef(Simpson_ref)[1]), ci.lb = c(Simpson_deg$ci.lb[1], Simpson_ref$ci.lb[1]), ci.ub = c(Simpson_deg$ci.ub[1], Simpson_ref$ci.ub[1])) %>% mutate(yi_pct = (exp(yi) - 1) * 100, ci.lb_pct = (exp(ci.lb) - 1) * 100, ci.ub_pct = (exp(ci.ub) - 1) * 100)
 
+# Combine all mean and CI
 alpha_diversity_mean_ci <- rbind (OTU_mean_ci, Chao_mean_ci, Shannon_mean_ci, Simpson_mean_ci)
 
 alpha_diversity_mean_ci <- alpha_diversity_mean_ci %>%left_join(alpha_diversity_counts, by = c("Comparison", "Metrics")) %>%mutate(annotation = paste0("(", studies, "|", observations, ")"))
@@ -801,8 +886,6 @@ alpha_diversity_mean_ci <- alpha_diversity_mean_ci %>% mutate(Parameter = "Alpha
 ```
 
 ```{r}
-alpha_diversity_mean_ci
-
 # Get common column names across ALL datasets
 all_datasets <- list(a_OTU_resVsdeg, a_OTU_resVsref, a_Chao_resVsdeg, a_Chao_resVsref, a_Shannon_resVsdeg, a_Shannon_resVsref, a_Simpson_resVsdeg, a_Simpson_resVsref)
 
@@ -815,12 +898,13 @@ combined_data <- bind_rows(a_OTU_resVsdeg %>% select(all_of(common_cols)), a_OTU
 # Convert raw yi (log scale) to percentage scale
 combined_data <- combined_data %>% mutate(yi_pct = (exp(yi) - 1) * 100)
 
-# Remove all specified rows
+# Remove extreme data
 rows_to_remove <- c(984, 991, 1073, 987, 312, 314, 146, 147, 285, 284, 269, 274, 8)
 combined_data_filtered <- combined_data[-rows_to_remove, ]
 ```
 
 ```{r}
+# Plots
 combined_data_filtered$Metrics <- factor(combined_data_filtered$Metrics, levels = c("Simpson index", "Shannon index", "Chao1 richness", "Observed richness"))
 
 alpha_diversity_mean_ci$Metrics <- factor(alpha_diversity_mean_ci$Metrics, levels = c("Simpson index", "Shannon index", "Chao1 richness", "Observed richness"))
@@ -833,28 +917,34 @@ alpha_diversity_ref_plot <- ggplot() + geom_vline(xintercept = 0, linetype = "da
 
 # Combine them
 alpha_diversity_combined_plot <- grid.arrange(alpha_diversity_deg_plot, alpha_diversity_ref_plot, ncol = 2)
-alpha_diversity_combined_plot
 ```
 
 ### Composition
 
 ```{r}
+# Beta diversity Restored vs Degraded
 mod_beta_diversity_degraded <- rma.mv(yi, vi, random = ~ 1 | ID, data = beta_diversity_degraded)
 mod_beta_diversity_degraded
 
+# Beta diversity Restored vs Reference
 mod_beta_diversity_reference <- rma.mv(yi, vi, random = ~ 1 | ID, data = beta_diversity_reference)
 mod_beta_diversity_reference
 
+# Community structure Restored vs Degraded
 mod_structure_degraded <- rma.mv(yi, vi, random = ~ 1 | ID, data = structure_degraded)
 mod_structure_degraded
 
+# Community structure Restored vs Reference
 mod_structure_reference <- rma.mv(yi, vi, random = ~ 1 | ID, data = structure_reference)
 mod_structure_reference
 
+# Beta diversity change to % Change
 beta_diversity_mean_ci <- data.frame(Comparison = c("Restored vs Degraded", "Restored vs Reference"), Metrics = "Beta diversity", yi = c(coef(mod_beta_diversity_degraded)[1], coef(mod_beta_diversity_reference)[1]), ci.lb = c(mod_beta_diversity_degraded$ci.lb[1], mod_beta_diversity_reference$ci.lb[1]), ci.ub = c(mod_beta_diversity_degraded$ci.ub[1], mod_beta_diversity_reference$ci.ub[1])) %>% mutate(yi_pct = (exp(yi) - 1) * 100, ci.lb_pct = (exp(ci.lb) - 1) * 100, ci.ub_pct = (exp(ci.ub) - 1) * 100)
 
+# Community structure change to % Change
 structure_diversity_mean_ci <- data.frame(Comparison = c("Restored vs Degraded", "Restored vs Reference"), Metrics = "Community structure", yi = c(coef(mod_structure_degraded)[1], coef(mod_structure_reference)[1]), ci.lb = c(mod_structure_degraded$ci.lb[1], mod_structure_reference$ci.lb[1]), ci.ub = c(mod_structure_degraded$ci.ub[1], mod_structure_reference$ci.ub[1])) %>% mutate(yi_pct = (exp(yi) - 1) * 100, ci.lb_pct = (exp(ci.lb) - 1) * 100, ci.ub_pct = (exp(ci.ub) - 1) * 100)
 
+# Combine mean and CI
 beta_diversity_Beta_compo <- rbind(beta_diversity_mean_ci, structure_diversity_mean_ci)
                             
 counts_beta_diversity_degraded <- beta_diversity_degraded %>%  group_by(Metrics) %>% summarise( studies = n_distinct(ID), observations = n())
@@ -873,8 +963,6 @@ beta_diversity_Beta_compo <- beta_diversity_Beta_compo %>% mutate(Parameter = "C
 ```
 
 ```{r}
-beta_diversity_Beta_compo
-
 composition_raw_degraded <- bind_rows(beta_diversity_degraded, structure_degraded)
 composition_raw_reference <- bind_rows(beta_diversity_reference, structure_reference)
 
@@ -902,28 +990,34 @@ beta_diversity_ref_plot <- ggplot() + geom_vline(xintercept = 0, linetype = "das
 
 # Combine them
 beta_diversity_combined_plot <- grid.arrange(beta_diversity_deg_plot, beta_diversity_ref_plot, ncol = 2)
-beta_diversity_combined_plot
 ```
 
 ### Relative abundance
 
 ```{r}
+# Ascomycota Restored vs Degraded
 mod_Ascomycota_degraded <- rma.mv(yi, vi, random = ~ 1 | ID, data = a_Ascomycota_degraded)
 mod_Ascomycota_degraded
 
+# Ascomycota Restored vs Reference
 mod_Ascomycota_reference <- rma.mv(yi, vi, random = ~ 1 | ID, data = a_Ascomycota_reference)
 mod_Ascomycota_reference
-                                  
+
+# Basidiomycota Restored vs Degraded
 mod_Basidiomycota_degraded <- rma.mv(yi, vi, random = ~ 1 | ID, data = a_Basidiomycota_degraded)
 mod_Basidiomycota_degraded
 
+# Basidiomycota Restored vs Reference
 mod_Basidiomycota_reference <- rma.mv(yi, vi, random = ~ 1 | ID, data = a_Basidiomycota_reference)
 mod_Basidiomycota_reference
 
+# Ascomycota change to % Change
 Ascomycota_mean_ci <- data.frame(Comparison = c("Restored vs Degraded", "Restored vs Reference"), Metrics = "Ascomycota", yi = c(coef(mod_Ascomycota_degraded)[1], coef(mod_Ascomycota_reference)[1]), ci.lb = c(mod_Ascomycota_degraded$ci.lb[1], mod_Ascomycota_reference$ci.lb[1]), ci.ub = c(mod_Ascomycota_degraded$ci.ub[1], mod_Ascomycota_reference$ci.ub[1])) %>% mutate(yi_pct = (exp(yi) - 1) * 100, ci.lb_pct = (exp(ci.lb) - 1) * 100, ci.ub_pct = (exp(ci.ub) - 1) * 100)
 
+# Basidiomycota change to % Change
 Basidiomycota_mean_ci <- data.frame(Comparison = c("Restored vs Degraded", "Restored vs Reference"), Metrics = "Basidiomycota", yi = c(coef(mod_Basidiomycota_degraded)[1], coef(mod_Basidiomycota_reference)[1]), ci.lb = c(mod_Basidiomycota_degraded$ci.lb[1], mod_Basidiomycota_reference$ci.lb[1]), ci.ub = c(mod_Basidiomycota_degraded$ci.ub[1], mod_Basidiomycota_reference$ci.ub[1])) %>% mutate(yi_pct = (exp(yi) - 1) * 100, ci.lb_pct = (exp(ci.lb) - 1) * 100, ci.ub_pct = (exp(ci.ub) - 1) * 100)
 
+# Combine mean and CI
 Ascomycota_Basidiomycota <- rbind(Ascomycota_mean_ci, Basidiomycota_mean_ci)
 
 counts_Ascomycota_degraded <- a_Ascomycota_degraded %>% group_by(Metrics) %>% summarise(studies = n_distinct(ID), observations = n())
@@ -942,8 +1036,6 @@ Ascomycota_Basidiomycota_combined <- Ascomycota_Basidiomycota_combined %>% mutat
 ```
 
 ```{r}
-Ascomycota_Basidiomycota_combined
-
 # Get common column names between the two datasets
 common_cols_abundance <- intersect(names(Ascomycota_Basidiomycota_deg_raw), names(Ascomycota_Basidiomycota_ref_raw))
 
@@ -966,31 +1058,30 @@ abundance_ref_plot <- ggplot() + geom_vline(xintercept = 0, linetype = "dashed",
 
 # Combine them
 abundance_combined_plot <- grid.arrange(abundance_deg_plot, abundance_ref_plot, ncol = 2)
-abundance_combined_plot
 ```
 
 ### Biomass
 
 ```{r}
-## --- Meta-analysis models ---
+# PLFA content Restored vs Degraded
 mod_PLFA_degraded  <- rma.mv(yi, vi, random = ~1 | ID, control = list(optimizer = "optim"), data = a_PLFA_degraded)
+
+# PLFA content Restored vs Reference
 mod_PLFA_reference <- rma.mv(yi, vi, random = ~1 | ID, control = list(optimizer = "optim"), data = a_PLFA_reference)
 
-## --- Extract estimates and CIs ---
+# PLFA content change to % Change
 PLFA_mean_ci <- tibble(Comparison = c("Restored vs Degraded", "Restored vs Reference"), Metrics = "PLFA content", yi = c(coef(mod_PLFA_degraded)[1], coef(mod_PLFA_reference)[1]), ci.lb = c(mod_PLFA_degraded$ci.lb[1], mod_PLFA_reference$ci.lb[1]), ci.ub = c(mod_PLFA_degraded$ci.ub[1], mod_PLFA_reference$ci.ub[1])) %>% mutate(yi_pct = (exp(yi) - 1) * 100, ci.lb_pct = (exp(ci.lb) - 1) * 100, ci.ub_pct = (exp(ci.ub) - 1) * 100)
 
-## --- Study and observation counts ---
+## Study and observation counts
 count_fun <- function(dat) {dat %>% summarise(studies = n_distinct(ID), observations = n(), .groups = "drop" )}
 
 all_counts <- bind_rows(count_fun(a_PLFA_degraded)  %>% mutate(Comparison = "Restored vs Degraded"), count_fun(a_PLFA_reference) %>% mutate(Comparison = "Restored vs Reference")) %>% mutate(Metrics = "PLFA content")
 
-## --- Combine results with counts ---
+# Combine results with counts
 PLFA_mean_ci_combined <- PLFA_mean_ci %>% left_join(all_counts, by = c("Comparison", "Metrics")) %>% mutate(annotation = paste0("(", studies, "|", observations, ")"), Parameter  = "Biomass")
 ```
 
 ```{r}
-PLFA_mean_ci_combined
-
 # Get common column names between the two datasets
 common_cols_plfa <- intersect(names(a_PLFA_degraded), names(a_PLFA_reference))
 
@@ -1009,40 +1100,34 @@ plfa_ref_plot <- ggplot() + geom_vline(xintercept = 0, linetype = "dashed", colo
 
 # Arrange them side by side
 plfa_combined_plot <- grid.arrange(plfa_deg_plot, plfa_ref_plot, ncol = 2)
-plfa_combined_plot
 ```
 
 ### Figure 2
 
 ```{r}
 Figure_2_deg1 <- grid.arrange(alpha_diversity_deg_plot, plfa_deg_plot, nrow = 2, heights = c(1, 0.4))
-Figure_2_deg1
-
 Figure_2_deg2 <- grid.arrange(abundance_deg_plot, beta_diversity_deg_plot, nrow = 2, heights = c(1, 1))
-Figure_2_deg2
-
-Figure_2_deg3 <- grid.arrange(Figure_2_deg1, Figure_2_deg2, ncol = 2, widths = c(1, 1), top  = textGrob("Restored vs Degraded", gp = gpar(fontsize = 12, fontface = "bold")))
-Figure_2_deg3
-
 Figure_2_ref4 <- grid.arrange(alpha_diversity_ref_plot, plfa_ref_plot, nrow = 2, heights = c(1, 0.4))
-Figure_2_ref4
-
 Figure_2_ref5 <- grid.arrange(abundance_ref_plot, beta_diversity_ref_plot, nrow = 2, heights = c(1, 1))
-Figure_2_ref5
-
-combined_plot_ref6 <- grid.arrange(Figure_2_ref4, Figure_2_ref5, ncol = 2, widths = c(1, 1), top = textGrob("Restored vs Reference", gp = gpar(fontsize = 12, fontface = "bold")))
-Figure_2_ref6
 ```
 
 ```{r}
-ggsave("figure_2.1.jpg", combined_plot_deg3, dpi = 600, height = 5, width = 5)
+Figure_2_deg3 <- grid.arrange(Figure_2_deg1, Figure_2_deg2, ncol = 2, widths = c(1, 1), top  = textGrob("Restored vs Degraded", gp = gpar(fontsize = 12, fontface = "bold")))
+Figure_2_deg3
+Figure_2_ref6 <- grid.arrange(Figure_2_ref4, Figure_2_ref5, ncol = 2, widths = c(1, 1), top = textGrob("Restored vs Reference", gp = gpar(fontsize = 12, fontface = "bold")))
+Figure_2_ref6
+```
 
+```{r eval = FALSE}
+ggsave("figure_2.1.jpg", combined_plot_deg3, dpi = 600, height = 5, width = 5)
 ggsave("figure_2.2.jpg", combined_plot_ref6, dpi = 600, height = 5, width = 5)
 ```
 
-# [Chapte IX]{style="color: blue;"}
+# [Chapte X]{style="color: blue;"}
 
 ## Effect of restoration strategy
+
+#### Function to calculate predicted value
 
 ```{r}
 get_predictions <- function(model, data, comparison_type, metric_type) {
@@ -1070,30 +1155,39 @@ get_predictions <- function(model, data, comparison_type, metric_type) {
 ### Alpha diversity
 
 ```{r}
+# Observed richness Restored vs Degraded
 OTU_deg_model <- rma.mv(yi, vi, mods = ~ Restoration_strategy,random = ~ 1 | ID, data = a_OTU_resVsdeg)
 OTU_deg_model
 
+# Observed richness Restored vs Reference
 OTU_ref_model <-rma.mv(yi, vi, mods = ~ Restoration_strategy, random = ~ 1 | ID, data = a_OTU_resVsref) 
 OTU_ref_model
 
+# Chao1 richness Restored vs Degraded
 Chao_deg_model <- rma.mv(yi, vi, mods = ~ Restoration_strategy, random = ~ 1 | ID, data = a_Chao_resVsdeg)
 Chao_deg_model
 
+# Chao1 richness Restored vs Reference
 Chao_ref_model <- rma.mv(yi, vi, mods = ~ Restoration_strategy, random = ~ 1 | ID, data = a_Chao_resVsref)
 Chao_ref_model
 
+# Shannon index Restored vs Degraded
 Shannon_deg_model <- rma.mv(yi, vi, mods = ~ Restoration_strategy, random = ~ 1 | ID, data = a_Shannon_resVsdeg)
 Shannon_deg_model
 
+# Shannon index Restored vs Reference
 Shannon_ref_model <- rma.mv(yi, vi, mods = ~ Restoration_strategy, random = ~ 1 | ID, data = a_Shannon_resVsref)
 Shannon_ref_model
 
+# Simpson index Restored vs Degraded
 Simpson_deg_model <- rma.mv(yi, vi, mods = ~ Restoration_strategy, random = ~ 1 | ID, data = a_Simpson_resVsdeg)
 Simpson_deg_model
 
+# Simpson index Restored vs Reference
 Simpson_ref_model <- rma.mv(yi, vi, mods = ~ Restoration_strategy, random = ~ 1 | ID, data = a_Simpson_resVsref)
 Simpson_ref_model
 
+# Get predictions dataset
 OTU_deg_predictions <- get_predictions(OTU_deg_model, a_OTU_resVsdeg, "Restored vs Degraded", "Observed richness")
 OTU_ref_predictions <- get_predictions(OTU_ref_model, a_OTU_resVsref, "Restored vs Reference", "Observed richness")
 Chao_deg_predictions <- get_predictions(Chao_deg_model, a_Chao_resVsdeg, "Restored vs Degraded", "Chao1 richness")
@@ -1104,22 +1198,21 @@ Simpson_deg_predictions <- get_predictions(Simpson_deg_model, a_Simpson_resVsdeg
 Simpson_ref_predictions <- get_predictions(Simpson_ref_model, a_Simpson_resVsref, "Restored vs Reference", "Simpson index")
 all_predictions_alpha_diversity <- bind_rows(OTU_deg_predictions, OTU_ref_predictions, Chao_deg_predictions, Chao_ref_predictions, Shannon_deg_predictions, Shannon_ref_predictions, Simpson_deg_predictions, Simpson_ref_predictions)
 
+# change to % Change
 all_predictions_alpha_diversity <- all_predictions_alpha_diversity %>% mutate(pred_pct = pred * 100, ci.lb_pct = ci.lb * 100, ci.ub_pct = ci.ub * 100)
 
 all_predictions_alpha_diversity <- all_predictions_alpha_diversity %>% mutate(Parameter = "Alpha diversity")
 ```
 
 ```{r}
-all_predictions_alpha_diversity
-
+# Plots
 all_predictions_alpha_diversity$Metrics <- factor (all_predictions_alpha_diversity$Metrics, levels = c("Simpson index", "Shannon index", "Chao1 richness", "Observed richness"))
 
 combined_data_filtered$Metrics <- factor (combined_data_filtered$Metrics, levels = c("Simpson index", "Shannon index", "Chao1 richness", "Observed richness"))
 
-combined_data_filtered
-
 alpha_diversity_restoration_deg_plot <- ggplot() + geom_vline(xintercept = 0, linetype = "dashed", color = "grey60") + geom_point(data = combined_data_filtered %>% filter(Comparison == "Restored vs Degraded"), aes(x = yi_pct, y = Metrics, fill = Restoration_strategy), position = position_jitterdodge(jitter.width = 0.1, jitter.height = 0.1, dodge.width = 0.8), alpha = 0.2, size = 3, shape = 21, stroke = 0.1, color = "black") + geom_pointrange(data = all_predictions_alpha_diversity %>% filter(Comparison == "Restored vs Degraded"), aes(x = pred_pct, y = Metrics, xmin = ci.lb_pct, xmax = ci.ub_pct, group = Restoration_strategy), color = "black", size = 0.5, shape = 1, linewidth = 0.5, stroke = 0.5, fill = "black", position = position_dodge(width = 0.8)) + scale_fill_manual(values = c("Active" = "#F8766D", "Passive" = "#7CAE00")) + coord_cartesian(xlim = c(-80, 120)) + labs(x = "% Change (Alpha diversity)", y = NULL) + theme_bw() + theme(legend.position = "none", axis.ticks.y = element_blank(), axis.text.y = element_blank(), plot.title = element_text(hjust = 0.5, face = "plain", size = 14), axis.title = element_text(face = "plain", size = 12), axis.text = element_text(size = 10, color = "black"), panel.grid.major = element_line(color = "transparent"), panel.grid.minor = element_blank(), panel.border = element_rect(color = "black", fill = NA))
 alpha_diversity_restoration_deg_plot
+
 alpha_diversity_restoration_ref_plot <- ggplot() + geom_vline(xintercept = 0, linetype = "dashed", color = "grey60") + geom_point(data = combined_data_filtered %>% filter(Comparison == "Restored vs Reference"), aes(x = yi_pct, y = Metrics, fill = Restoration_strategy), position = position_jitterdodge(jitter.width = 0.1, jitter.height = 0.1, dodge.width = 0.8), alpha = 0.2, size = 3, shape = 21, stroke = 0.1, color = "black") + geom_pointrange(data = all_predictions_alpha_diversity %>% filter(Comparison == "Restored vs Reference"), aes(x = pred_pct, y = Metrics, xmin = ci.lb_pct, xmax = ci.ub_pct, group = Restoration_strategy), color = "black", size = 0.5, shape = 1, linewidth = 0.5, stroke = 0.5, fill = "black", position = position_dodge(width = 0.8)) + scale_fill_manual(values = c("Active" = "#F8766D", "Passive" = "#7CAE00")) + labs(x = "% Change (Alpha diversity)", y = NULL) + theme_bw() + theme(legend.position = "none", axis.ticks.y = element_blank(), axis.text.y = element_blank(), plot.title = element_text(hjust = 0.5, face = "plain", size = 14), axis.title = element_text(face = "plain", size = 12), axis.text = element_text(size = 10, color = "black"), panel.grid.major = element_line(color = "transparent"), panel.grid.minor = element_blank(), panel.border = element_rect(color = "black", fill = NA))
 alpha_diversity_restoration_ref_plot
 ```
@@ -1127,22 +1220,23 @@ alpha_diversity_restoration_ref_plot
 ### Composition
 
 ```{r}
-beta_diversity_degraded
-beta_diversity_reference
-structure_degraded
-structure_reference
-
+# Beta diversity Restored vs Degraded
 beta_deg_model <- rma.mv(yi, vi, mods = ~ Restoration_strategy, random = ~ 1 | ID, data = beta_diversity_degraded)
 beta_deg_model
 
+# Beta diversity Restored vs Reference
 beta_ref_model <- rma.mv(yi, vi, mods = ~ Restoration_strategy, random = ~ 1 | ID, data = beta_diversity_reference)
 beta_ref_model
 
+# Community structure Restored vs Degraded
 structure_deg_model <- rma.mv(yi, vi, mods = ~ Restoration_strategy, random = ~ 1 | ID, data = structure_degraded)
 structure_deg_model
 
+# Community structure Restored vs Reference
 structure_ref_model <- rma.mv(yi, vi, mods = ~ Restoration_strategy, random = ~ 1 | ID, data = structure_reference)
 structure_ref_model
+
+# Get predictions dataset
 beta_deg_predictions <- get_predictions(beta_deg_model, beta_diversity_degraded, "Restored vs Degraded", "Beta diversity")
 beta_ref_predictions <- get_predictions(beta_ref_model, beta_diversity_reference, "Restored vs Reference", "Beta diversity")
 comp_deg_predictions <- get_predictions(structure_deg_model, structure_degraded, "Restored vs Degraded", "Community structure")
@@ -1150,16 +1244,14 @@ comp_ref_predictions <- get_predictions(structure_ref_model, structure_reference
 all_predictions_composition <- bind_rows(beta_deg_predictions,beta_ref_predictions,comp_deg_predictions,comp_ref_predictions)
 all_predictions_composition <- all_predictions_composition %>% mutate(pred_pct = pred * 100, ci.lb_pct = ci.lb * 100, ci.ub_pct = ci.ub * 100)
 
+# change to % Change
 all_predictions_composition <- all_predictions_composition %>% mutate(Parameter = "Composition")
 ```
 
 ```{r}
-all_predictions_composition
-composition_raw_combined
-
+# Plots
 composition_raw_combined <- composition_raw_combined %>% mutate(Metrics = recode(Metrics, "Structure" = "Community structure"))
 
-all_predictions_composition
 all_predictions_composition$Metrics <- factor (all_predictions_composition$Metrics, levels = c("Community structure", "Beta diversity"))
 composition_raw_combined$Metrics <- factor (composition_raw_combined$Metrics, levels = c("Community structure", "Beta diversity"))
 
@@ -1174,38 +1266,38 @@ composition_restoration_ref_plot
 ### Relative abundance
 
 ```{r}
+# Ascomycota Restored vs Degraded
 Ascomycota_deg_model <- rma.mv(yi, vi, mods = ~ Restoration_strategy, random = ~ 1 | ID, data = a_Ascomycota_degraded)
 Ascomycota_deg_model
 
+# Ascomycota Restored vs Reference
 Ascomycota_ref_model <- rma.mv(yi, vi, mods = ~ Restoration_strategy, random = ~ 1 | ID, data = a_Ascomycota_reference)
 Ascomycota_ref_model
 
+# Basidiomycota Restored vs Degraded
 Basidiomycota_deg_model <- rma.mv(yi, vi, mods = ~ Restoration_strategy, random = ~ 1 | ID, data = a_Basidiomycota_degraded)
 Basidiomycota_deg_model
 
+# Basidiomycota Restored vs Reference
 Basidiomycota_ref_model <- rma.mv(yi, vi, mods = ~ Restoration_strategy, random = ~ 1 | ID, data = a_Basidiomycota_reference)
 Basidiomycota_ref_model
 
+# Get prediction dataset
 Ascomycota_deg_predictions <- get_predictions(Ascomycota_deg_model, a_Ascomycota_degraded, "Restored vs Degraded", "Ascomycota")
-
 Ascomycota_ref_predictions <- get_predictions(Ascomycota_ref_model, a_Ascomycota_reference, "Restored vs Reference", "Ascomycota")
-
 Basidiomycota_deg_predictions <- get_predictions(Basidiomycota_deg_model, a_Basidiomycota_degraded, "Restored vs Degraded",  "Basidiomycota")
-
 Basidiomycota_ref_predictions <- get_predictions(Basidiomycota_ref_model, a_Basidiomycota_reference, "Restored vs Reference", "Basidiomycota")
-
 all_predictions_abundance <- bind_rows(Ascomycota_deg_predictions, Ascomycota_ref_predictions, Basidiomycota_deg_predictions, Basidiomycota_ref_predictions)
 
+# change to % Change
 all_predictions_abundance <- all_predictions_abundance %>% mutate(pred_pct = pred * 100, ci.lb_pct = ci.lb * 100, ci.ub_pct = ci.ub * 100)
 
 all_predictions_abundance <- all_predictions_abundance %>% mutate(Parameter = "Relative abundance")
+head(all_predictions_abundance)
 ```
 
 ```{r}
-all_predictions_abundance
-abundance_raw_combined
-
-all_predictions_abundance
+# Plots
 all_predictions_abundance$Metrics <- factor (all_predictions_abundance$Metrics, levels = c("Basidiomycota", "Ascomycota"))
 abundance_raw_combined$Metrics <- factor (abundance_raw_combined$Metrics, levels = c("Basidiomycota", "Ascomycota"))
 
@@ -1219,35 +1311,35 @@ abundance_restoration_ref_plot
 ### Biomass
 
 ```{r}
+# PLFA content Restored vs Degraded
 plfa_deg_restoration_model <- rma.mv(yi, vi, mods = ~ Restoration_strategy, random = ~ 1 | ID, data = a_PLFA_degraded)
 plfa_deg_restoration_model
 
+# PLFA content Restored vs Reference
 plfa_ref_restoration_model <- rma.mv(yi, vi, mods = ~ Restoration_strategy, random = ~ 1 | ID, data = a_PLFA_reference)
 plfa_ref_restoration_model
 
+# Get prediction dataset
 plfa_deg_predictions <- get_predictions(plfa_deg_restoration_model, a_PLFA_degraded, "Restored vs Degraded", "PLFA content")
-
 plfa_ref_predictions <- get_predictions(plfa_ref_restoration_model, a_PLFA_reference, "Restored vs Reference", "PLFA content")
-
 all_predictions_plfa <- bind_rows(plfa_deg_predictions, plfa_ref_predictions)
 
+# change to % Change
 all_predictions_plfa <- all_predictions_plfa %>% mutate(pred_pct = pred * 100, ci.lb_pct = ci.lb * 100, ci.ub_pct = ci.ub * 100)
-
 all_predictions_plfa <- all_predictions_plfa %>% mutate(Parameter = "Biomass")
+head(all_predictions_plfa)
 ```
 
 ```{r}
-all_predictions_plfa
-plfa_raw_combined
-
+# Plot
 plfa_restoration_deg_plot <- ggplot() + geom_vline(xintercept = 0, linetype = "dashed", color = "grey60") + geom_point(data = plfa_raw_combined %>% filter(Comparison == "Restored vs Degraded"), aes(x = yi_pct, y = Metrics, fill = Restoration_strategy), position = position_jitterdodge(jitter.width = 0.1, jitter.height = 0.1, dodge.width = 0.8), alpha = 0.5, size = 3, shape = 21, stroke = 0.1, color = "black") + geom_pointrange(data = all_predictions_plfa %>% filter(Comparison == "Restored vs Degraded"), aes(x = pred_pct, y = Metrics, xmin = ci.lb_pct, xmax = ci.ub_pct, group = Restoration_strategy), color = "black", size = 0.5, shape = 1, linewidth = 0.5, stroke = 0.5, fill = "black", position = position_dodge(width = 0.8)) + scale_fill_manual(values = c("Active" = "#F8766D", "Passive" = "#7CAE00")) + coord_cartesian(xlim = c(-100, 300)) + labs(x = "% Change (Biomass)", y = NULL) + theme_bw() + theme(legend.position = "none", axis.ticks.y = element_blank(), axis.text.y = element_blank(), plot.title = element_text(hjust = 0.5, face = "plain", size = 14), axis.title = element_text(face = "plain", size = 12), axis.text = element_text(size = 10, color = "black"), panel.grid.major = element_line(color = "transparent"), panel.grid.minor = element_blank(), panel.border = element_rect(color = "black", fill = NA))
-plfa_restoration_deg_plot
 
 plfa_restoration_ref_plot <- ggplot() + geom_vline(xintercept = 0, linetype = "dashed", color = "grey60") + geom_point(data = plfa_raw_combined %>% filter(Comparison == "Restored vs Reference"), aes(x = yi_pct, y = Metrics, fill = Restoration_strategy), position = position_jitterdodge(jitter.width = 0.1, jitter.height = 0.1, dodge.width = 0.8), alpha = 0.5, size = 3, shape = 21, stroke = 0.1, color = "black") + geom_pointrange(data = all_predictions_plfa %>% filter(Comparison == "Restored vs Reference"), aes(x = pred_pct, y = Metrics, xmin = ci.lb_pct, xmax = ci.ub_pct, group = Restoration_strategy), color = "black", size = 0.5, shape = 1, linewidth = 0.5, stroke = 0.5, fill = "black", position = position_dodge(width = 0.8)) + scale_fill_manual(values = c("Active" = "#F8766D", "Passive" = "#7CAE00")) + labs(x = "% Change (Biomass)", y = NULL) + theme_bw() + theme(legend.position = "none", axis.ticks.y = element_blank(), axis.text.y = element_blank(), plot.title = element_text(hjust = 0.5, face = "plain", size = 14), axis.title = element_text(face = "plain", size = 12), axis.text = element_text(size = 10, color = "black"), panel.grid.major = element_line(color = "transparent"), panel.grid.minor = element_blank(), panel.border = element_rect(color = "black", fill = NA))
-plfa_restoration_ref_plot
 ```
 
 ### Figure 3
+
+##### Legends for figures
 
 ```{r}
 plot_with_legend <- ggplot() + geom_vline(xintercept = 0, linetype = "dashed", color = "grey60") + geom_point(data = combined_data_filtered %>% filter(Comparison == "Restored vs Degraded"), aes(x = yi_pct, y = Metrics, fill = Restoration_strategy), position = position_jitterdodge(jitter.width = 0.2, jitter.height = 0.1, dodge.width = 0.8), alpha = 0.5, size = 3, shape = 21, stroke = 0.1, color = "black") + theme_bw() + scale_fill_manual(values = c("Active" = "#F8766D", "Passive" = "#7CAE00"), name = "Restoration strategy", labels = c("Active" = "Active restoration", "Passive" = "Natural regeneration")) + theme(legend.position = "bottom", panel.grid.major = element_line(color = "transparent"), panel.grid.minor = element_blank(), panel.border = element_rect(color = "black", fill = NA), legend.text = element_text(size = 12)); plot_with_legend
@@ -1262,35 +1354,34 @@ get_legend <- function(plot) {
 legend <- get_legend(plot_with_legend)
 ```
 
+##### Combine figures
+
 ```{r}
 Figure_3_deg1 <- grid.arrange(alpha_diversity_restoration_deg_plot, plfa_restoration_ref_plot, nrow = 2, heights = c(1, 0.4))
-Figure_3_deg1
-
 Figure_3_deg2 <- grid.arrange(abundance_restoration_deg_plot, composition_restoration_deg_plot, nrow = 2, heights = c(1, 1))
-Figure_3_deg2
+Figure_3_ref4 <- grid.arrange(alpha_diversity_restoration_ref_plot, plfa_restoration_ref_plot, nrow = 2, heights = c(1, 0.4))
+Figure_3_ref5 <- grid.arrange(abundance_restoration_ref_plot, composition_restoration_ref_plot, nrow = 2, heights = c(1, 1))
+```
 
+```{r}
 Figure_3_deg3 <- grid.arrange(Figure_3_deg1, Figure_3_deg2, legend, ncol = 2, nrow = 2, layout_matrix = rbind(c(1, 2), c(3, 3)), heights = c(10, 1),  top = textGrob("Restored vs Degraded", gp = gpar(fontsize = 12, fontface = "bold")))
 Figure_3_deg3
-
-Figure_3_ref4 <- grid.arrange(alpha_diversity_restoration_ref_plot, plfa_restoration_ref_plot, nrow = 2, heights = c(1, 0.4))
-Figure_3_ref4
-
-Figure_3_ref5 <- grid.arrange(abundance_restoration_ref_plot, composition_restoration_ref_plot, nrow = 2, heights = c(1, 1))
-Figure_3_ref5
-
 Figure_3_ref6 <- grid.arrange(Figure_3_ref4, Figure_3_ref5, legend, ncol = 2, nrow = 2, layout_matrix = rbind(c(1, 2), c(3, 3)), heights = c(10, 1), top = textGrob("Restored vs Reference", gp = gpar(fontsize = 12, fontface = "bold")))
 Figure_3_ref6
 ```
 
-```{r}
-ggsave("figure_3.1.jpg",combined_plot_deg13, dpi = 600, height = 8, width = 5)
+##### Save figures
 
+```{r eval = FALSE}
+ggsave("figure_3.1.jpg",combined_plot_deg13, dpi = 600, height = 8, width = 5)
 ggsave("figure_3.2.jpg", combined_plot_ref16, dpi = 600, height = 8, width = 5)
 ```
 
-# [Chapter X]{style="color: blue;"}
+# [Chapter XI]{style="color: blue;"}
 
 ## Effect of restoration time
+
+#### Function for predicted value
 
 ```{r}
 get_time_predictions <- function(model, dataset)
@@ -1303,15 +1394,31 @@ get_time_predictions <- function(model, dataset)
 ### Alpha diversity
 
 ```{r}
+# Observed richness Restored vs Degraded
 OTU_deg_model <- rma.mv(yi, vi, mods = ~ Restoration_time, random = ~ 1 | ID, data = a_OTU_resVsdeg)
-OTU_ref_model <-rma.mv(yi, vi, mods = ~ Restoration_time, random = ~ 1 | ID, data = a_OTU_resVsref) 
+
+# Observed richness Restored vs Reference
+OTU_ref_model <-rma.mv(yi, vi, mods = ~ Restoration_time, random = ~ 1 | ID, data = a_OTU_resVsref)
+
+# Chao1 richness Restored vs Degraded
 Chao_deg_model <- rma.mv(yi, vi, mods = ~ Restoration_time, random = ~ 1 | ID, data = a_Chao_resVsdeg)
+
+# Chao1 richness Restored vs Reference
 Chao_ref_model <- rma.mv(yi, vi, mods = ~ Restoration_time, random = ~ 1 | ID, data = a_Chao_resVsref)
+
+# Shannon index Restored vs Degraded
 Shannon_deg_model <- rma.mv(yi, vi, mods = ~ Restoration_time, random = ~ 1 | ID, data = a_Shannon_resVsdeg)
+
+# Shannon index Restored vs Reference
 Shannon_ref_model <- rma.mv(yi, vi, mods = ~ Restoration_time, random = ~ 1 | ID, data = a_Shannon_resVsref)
+
+# Simpson index Restored vs Degraded
 Simpson_deg_model <- rma.mv(yi, vi, mods = ~ Restoration_time, random = ~ 1 | ID, data = a_Simpson_resVsdeg)
+
+# Simpson index Restored vs Reference
 Simpson_ref_model <- rma.mv(yi, vi, mods = ~ Restoration_time, random = ~ 1 | ID, data = a_Simpson_resVsref)
 
+# Get prediction dataset
 OTU_deg_predictions_time <- get_time_predictions(OTU_deg_model, a_OTU_resVsdeg)
 OTU_ref_predictions_time <- get_time_predictions(OTU_ref_model, a_OTU_resVsref)
 Chao_deg_predictions_time <- get_time_predictions(Chao_deg_model, a_Chao_resVsdeg)
@@ -1352,18 +1459,23 @@ alpha_diversity_ref_raw_time <- alpha_diversity_ref_raw %>% mutate(Parameter = "
 ### Composition
 
 ```{r}
+# Beta diversity Restored vs Degraded
 beta_deg_model <- rma.mv(yi, vi, mods = ~ Restoration_time, random = ~ 1 | ID, data = beta_diversity_degraded)
 beta_deg_model
 
+# Beta diversity Restored vs Reference
 beta_ref_model <- rma.mv(yi, vi, mods = ~ Restoration_time , random = ~ 1 | ID, data = beta_diversity_reference)
 beta_ref_model
 
+# Community structure Restored vs Degraded
 structure_deg_model <- rma.mv(yi, vi, mods = ~ Restoration_time , random = ~ 1 | ID, data = structure_degraded)
 structure_deg_model
 
+# Community structure Restored vs Reference
 structure_ref_model <- rma.mv(yi, vi, mods = ~ Restoration_time , random = ~ 1 | ID, data = structure_reference)
 structure_ref_model
 
+# Get prediction dataset
 beta_deg_pred <- get_time_predictions(beta_deg_model, beta_diversity_degraded)
 structure_deg_pred <- get_time_predictions(structure_deg_model, structure_degraded)
 
@@ -1391,24 +1503,26 @@ composition_raw_ref_time <- composition_raw_reference %>%mutate(Parameter = "Alp
 ### Relative abundance
 
 ```{r}
+# Ascomycota Restored vs Degraded
 Asco_restoration_deg_model <- rma.mv(yi, vi, mods = ~ Restoration_time, random = ~ 1 | ID,  data = a_Ascomycota_degraded)
 Asco_restoration_deg_model
 
+# Ascomycota Restored vs Reference
 Asco_restoration_ref_model <- rma.mv(yi, vi, mods = ~ Restoration_time , random = ~ 1 | ID,  data = a_Ascomycota_reference)
 Asco_restoration_ref_model
 
+# Basidiomycota Restored vs Degraded
 Basidio_restoration_deg_model <- rma.mv(yi, vi, mods = ~ Restoration_time , random = ~ 1 | ID, data = a_Basidiomycota_degraded)
 Basidio_restoration_deg_model
 
+# Basidiomycota Restored vs Reference
 Basidio_restoration_ref_model <- rma.mv(yi, vi, mods = ~ Restoration_time , random = ~ 1 | ID, data = a_Basidiomycota_reference)
 Basidio_restoration_ref_model
 
+# Get prediction dataset
 Ascomycota_deg_pred <- get_time_predictions(Asco_restoration_deg_model,a_Ascomycota_degraded)
-
 Basidiomycota_deg_pred <- get_time_predictions(Basidio_restoration_deg_model, a_Basidiomycota_degraded)
-
 Ascomycota_ref_pred <- get_time_predictions(Asco_restoration_ref_model, a_Ascomycota_reference)
-
 Basidiomycota_ref_pred <- get_time_predictions(Basidio_restoration_ref_model, a_Basidiomycota_reference)
 
 Ascomycota_deg_pred$Metrics <- "Ascomycota"
@@ -1430,25 +1544,15 @@ Ascomycota_Basidiomycota_ref_raw_time <- Ascomycota_Basidiomycota_ref_raw %>% mu
 ### Biomass
 
 ```{r}
+# PLFA content Restored vs Degraded
 plfa_deg_model <- rma.mv(yi, vi, mods = ~ Restoration_time, random = ~ 1 | ID, data = a_PLFA_degraded)
 plfa_deg_model
 
+# PLFA content Restored vs Reference
 plfa_ref_model <- rma.mv(yi, vi, mods = ~ Restoration_time , random = ~ 1 | ID, data = a_PLFA_reference)
 plfa_ref_model
 
-get_time_predictions <- function(model, dataset) {
-  time_seq <- seq(min(dataset$Restoration_time), 
-                  max(dataset$Restoration_time), length.out = 50)
-  pred <- predict(model, newmods = time_seq)
-  
-  data.frame(
-    Restoration_time = time_seq,
-    pred = pred$pred,
-    ci.lb = pred$ci.lb,
-    ci.ub = pred$ci.ub
-  )
-}
-
+# Get prediction dataset
 plfa_deg_pred <- get_time_predictions(plfa_deg_model, a_PLFA_degraded)
 plfa_ref_pred <- get_time_predictions(plfa_ref_model, a_PLFA_reference)
 plfa_deg_pred$Metrics <- "PLFA content"
@@ -1458,7 +1562,6 @@ plfa_ref_pred$Comparison <- "Restored vs Degraded"
 plfa_deg_pred%>% mutate(Parameter = "Biomass")
 plfa_ref_pred%>% mutate(Parameter = "Biomass")
 
-
 a_PLFA_reference_time <- a_PLFA_reference %>% mutate(Parameter = "Alpha diversity") %>% select(yi, vi, Restoration_time, Metrics, Comparison, Parameter)
 
 a_PLFA_degraded_time <- a_PLFA_degraded %>% mutate(Parameter = "Alpha diversity") %>% select(yi, vi, Restoration_time, Metrics, Comparison, Parameter)
@@ -1467,6 +1570,7 @@ a_PLFA_degraded_time <- a_PLFA_degraded %>% mutate(Parameter = "Alpha diversity"
 ### Figure 4
 
 ```{r}
+# Plots
 composition_raw_degraded_time <- composition_raw_degraded_time %>% mutate(Metrics = recode(Metrics, "Structure" = "Community structure"))
 
 time_raw <- rbind(alpha_diversity_deg_raw_time, composition_raw_degraded_time, Ascomycota_Basidiomycota_deg_raw_time, a_PLFA_degraded_time)%>%slice(-408)
@@ -1479,10 +1583,6 @@ time_combined_deg$Metrics <- factor(time_combined_deg$Metrics, levels = c("Obser
 
 time_plot_deg <- ggplot(time_combined_deg, aes(Restoration_time, pred)) + geom_hline(yintercept = 0, linetype = "dashed", color = "grey50") + geom_point(data = time_raw, aes(y = yi), alpha = 0.5, size = 3, shape = 21, fill = "orange", color = "black", stroke = 0.2) + geom_ribbon(aes(ymin = ci.lb, ymax = ci.ub), alpha = 0.6, fill = "grey60") + geom_line(color = "black", linewidth = 0.5) + labs(title = "Restored vs Degraded", x = "Restoration time (Yrs)", y = "lnRR") + theme_bw(base_size = 12) + theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 16), panel.grid.minor = element_blank(), panel.grid.major = element_blank(), strip.background = element_rect(fill = "grey95"), strip.text = element_text(size = 14), axis.text = element_text(size = 13), axis.text.x = element_text(size = 16), axis.title = element_text(size = 16)) + facet_wrap(~Metrics, scales = "free")
 time_plot_deg
-```
-
-```{r}
-ggsave("figure_4.1.jpg", time_plot, dpi = 600, height = 9, width = 8)
 ```
 
 ```{r}
@@ -1500,6 +1600,13 @@ time_plot_ref <- ggplot(time_combined_ref, aes(x = Restoration_time, y = pred)) 
 time_plot_ref
 ```
 
+```{r eval = FALSE}
+ggsave("figure_4.1.jpg", time_plot_deg, dpi = 600, height = 9, width = 8)
+ggsave("figure_4.2.jpg", time_plot_ref, dpi = 600, height = 9, width = 8)
+```
+
 ```{r}
-ggsave("figure_4.2.jpg", time_plot1, dpi = 600, height = 9, width = 8)
+sessionInfo()
+R.version.string
+capture.output(sessionInfo(), file = "sessionInfo.txt")
 ```
