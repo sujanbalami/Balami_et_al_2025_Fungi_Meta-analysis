@@ -1,4 +1,4 @@
-# Global meta-analysis reveals a widespread recovery gap in soil fungal communities following vegetation restoration
+# Persistent recovery gap in soil fungal communities after vegetation restoration: a meta-analysis 
 Sujan Balami <sup>a</sup>, Fangyuan Hua <sup>b</sup>, Yu-Xuan Mo <sup>a</sup>, Xian-Meng Shi <sup>a,c</sup>, Hai-Xia Hu <sup>a,d</sup>, Yue-Hua Hu <sup>a</sup>, Liang Song <sup>a,*</sup>
 
 <sup>a</sup>Yunnan Key Laboratory of Forest Ecosystem Stability and Global Change, Xishuangbanna Tropical Botanical Garden, Chinese Academy of Sciences, Yunnan 666303, China
