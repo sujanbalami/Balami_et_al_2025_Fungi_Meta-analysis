@@ -12,4 +12,4 @@ Sujan Balami <sup>a</sup>, Fangyuan Hua <sup>b</sup>, Yu-Xuan Mo <sup>a</sup>, X
 *Corresponding author: Prof. Liang Song, Email: songliang@xtbg.ac.cn
 
 
-To run the provided R script (R_..), please download the script and follow the accompanying instructions. The data files are available on Figshare under the identifier 10.6084/m9.figshare.30968581.
+To run the provided R script (R_meta_analysis.qmd), please download the script and follow the accompanying instructions. The data files are available on Figshare under the identifier 10.6084/m9.figshare.30968581.
